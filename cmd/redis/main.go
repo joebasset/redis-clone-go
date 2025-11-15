@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-
 	"strings"
+
+	"github.com/joebasset/redis-clone-go/internal/server"
 )
 
-func handleConn(conn net.Conn, store *Store) {
+func handleConn(conn net.Conn, store *server.Store) {
 	defer conn.Close()
 
 	reader := bufio.NewReader(conn)
@@ -23,8 +24,9 @@ func handleConn(conn net.Conn, store *Store) {
 
 		line = strings.TrimSpace(line)
 
-		err = store.handleRequests(line, conn)
+		err = store.HandleRequests(line, conn)
 		if err != nil {
+			_, err := conn.Write([]byte("Error: " + err.Error()))
 			fmt.Println("error:", err)
 			break
 		}
@@ -38,7 +40,7 @@ func main() {
 		return
 	}
 	fmt.Println("Listening on :6379...")
-	store := NewStore()
+	store := server.NewStore()
 	for {
 		conn, err := l.Accept()
 		if err != nil {
